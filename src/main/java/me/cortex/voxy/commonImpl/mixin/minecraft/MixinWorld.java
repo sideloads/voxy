@@ -1,5 +1,6 @@
 package me.cortex.voxy.commonImpl.mixin.minecraft;
 
+import me.cortex.voxy.common.world.SkyblockListener;
 import me.cortex.voxy.commonImpl.IWorldGetIdentifier;
 import me.cortex.voxy.commonImpl.WorldIdentifier;
 import net.minecraft.core.Holder;
@@ -30,7 +31,12 @@ public class MixinWorld implements IWorldGetIdentifier {
                                        int maxChainedNeighborUpdates,
                                        CallbackInfo ci) {
         if (key != null) {
-            this.identifier = new WorldIdentifier(key, seed, dimensionEntry == null?null:dimensionEntry.unwrapKey().orElse(null));
+            this.identifier = new WorldIdentifier(
+                    key,
+                    seed,
+                    dimensionEntry == null ? null : dimensionEntry.unwrapKey().orElse(null),
+                    SkyblockListener.getCurrentContext()
+            );
         } else {
             this.identifier = null;
         }
@@ -39,5 +45,10 @@ public class MixinWorld implements IWorldGetIdentifier {
     @Override
     public WorldIdentifier voxy$getIdentifier() {
         return this.identifier;
+    }
+
+    @Override
+    public void voxy$setIdentifier(WorldIdentifier identifier) {
+        this.identifier = identifier;
     }
 }

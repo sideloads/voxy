@@ -6,6 +6,7 @@ import me.cortex.voxy.client.core.gl.Capabilities;
 import me.cortex.voxy.client.core.model.bakery.BudgetBufferRenderer;
 import me.cortex.voxy.client.core.rendering.util.SharedIndexBuffer;
 import me.cortex.voxy.common.Logger;
+import me.cortex.voxy.common.world.SkyblockListener;
 import me.cortex.voxy.commonImpl.VoxyCommon;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -39,6 +40,7 @@ public class VoxyClient implements ClientModInitializer {
 
             SharedIndexBuffer.INSTANCE.id();
             BudgetBufferRenderer.init();
+            SkyblockListener.init();
 
             VoxyCommon.setInstanceFactory(VoxyClientInstance::new);
 

@@ -27,16 +27,18 @@ public class WorldIdentifier {
     public final ResourceKey<DimensionType> dimension;//Maybe?
     private final transient long hashCode;
     @Nullable transient WeakReference<WorldEngine> cachedEngineObject;
+    public final String subWorldContext;
 
-    public WorldIdentifier(@NotNull ResourceKey<Level> key, long biomeSeed, @Nullable ResourceKey<DimensionType> dimension) {
+    public WorldIdentifier(@NotNull ResourceKey<Level> key, long biomeSeed, @Nullable ResourceKey<DimensionType> dimension, String subWorldContext) {
         if (key == null) {
             throw new IllegalStateException("Key cannot be null");
         }
-        dimension = dimension==null?NULL_DIM_KEY:dimension;
+        dimension = dimension == null ? NULL_DIM_KEY : dimension;
         this.key = key;
         this.biomeSeed = biomeSeed;
         this.dimension = dimension;
-        this.hashCode = mixStafford13(registryKeyHashCode(key))^mixStafford13(registryKeyHashCode(dimension))^mixStafford13(biomeSeed);
+        this.subWorldContext = subWorldContext == null ? "" : subWorldContext;
+        this.hashCode = mixStafford13(registryKeyHashCode(key)) ^ mixStafford13(registryKeyHashCode(dimension)) ^ mixStafford13(biomeSeed) ^ this.subWorldContext.hashCode();
     }
 
     @Override
@@ -49,9 +51,9 @@ public class WorldIdentifier {
         if (obj instanceof WorldIdentifier other) {
             return other.hashCode == this.hashCode &&
                     other.biomeSeed == this.biomeSeed &&
-                    equal(other.key, this.key) &&//other.key.equals(this.key) &&
-                    equal(other.dimension, this.dimension)//other.dimension.equals(this.dimension)
-                    ;
+                    equal(other.key, this.key) &&
+                    equal(other.dimension, this.dimension) &&
+                    this.subWorldContext.equals(other.subWorldContext);
         }
         return false;
     }
@@ -70,7 +72,7 @@ public class WorldIdentifier {
             return null;
         }
         var engine = instance.getOrCreate(this);
-        if (engine==null) {
+        if (engine == null) {
             throw new IllegalStateException("Engine null on creation");
         }
         return engine;
@@ -90,7 +92,7 @@ public class WorldIdentifier {
         if (level == null) {
             return null;
         }
-        return ((IWorldGetIdentifier)level).voxy$getIdentifier();
+        return ((IWorldGetIdentifier) level).voxy$getIdentifier();
     }
 
     //Common utility function to get or create a world engine
@@ -124,9 +126,9 @@ public class WorldIdentifier {
     private static long registryKeyHashCode(ResourceKey<?> key) {
         var A = key.registry();
         var B = key.location();
-        int a = A==null?0:A.hashCode();
-        int b = B==null?0:B.hashCode();
-        return (Integer.toUnsignedLong(a)<<32)|Integer.toUnsignedLong(b);
+        int a = A == null ? 0 : A.hashCode();
+        int b = B == null ? 0 : B.hashCode();
+        return (Integer.toUnsignedLong(a) << 32) | Integer.toUnsignedLong(b);
     }
 
 
@@ -147,11 +149,10 @@ public class WorldIdentifier {
     }
 
     public static String getWorldId(WorldIdentifier identifier) {
-        String data = identifier.biomeSeed + identifier.key.toString();
+        String data = identifier.biomeSeed + identifier.key.toString() + identifier.subWorldContext;
         try {
             return bytesToHex(MessageDigest.getInstance("SHA-256").digest(data.getBytes())).substring(0, 32);
-        } catch (
-                NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -179,6 +180,9 @@ public class WorldIdentifier {
             writer.name("dimension");
             writer.value(identifier.dimension.location().toString());
 
+            writer.name("subWorldContext");
+            writer.value(identifier.subWorldContext);
+
             writer.endObject();
         }
 
@@ -192,9 +196,15 @@ public class WorldIdentifier {
             long biomeSeed = obj.getAsJsonPrimitive("biomeSeed").getAsLong();
             var sDim = obj.getAsJsonPrimitive("dimension").getAsString();
 
+            // im so sorry
+            String ctx = "";
+            if (obj.has("subWorldContext")) {
+                ctx = obj.getAsJsonPrimitive("subWorldContext").getAsString();
+            }
+
             var key = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(sKey));
             var dim = ResourceKey.create(Registries.DIMENSION_TYPE, ResourceLocation.parse(sDim));
-            return new WorldIdentifier(key, biomeSeed, dim);
+            return new WorldIdentifier(key, biomeSeed, dim, ctx);
         }
     }
 }

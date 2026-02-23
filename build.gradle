@@ -13,6 +13,17 @@ base {
 }
 
 repositories {
+
+    exclusiveContent {
+        forRepository {
+            maven { url "https://maven.azureaaron.net/releases" }
+        }
+
+        filter {
+            includeGroup "net.azureaaron"
+        }
+    }
+
     exclusiveContent {
         forRepository {
             maven {
@@ -36,7 +47,6 @@ repositories {
             includeGroup "net.caffeinemc"
         }
     }
-
 
 
     maven { url = "https://maven.shedaniel.me/" }
@@ -80,7 +90,7 @@ def gitCommitHash = { ->
     }
 }
 
-def buildtime = {System.currentTimeSeconds()}
+def buildtime = { System.currentTimeSeconds() }
 
 processResources {
     def time = buildtime()
@@ -97,7 +107,7 @@ loom {
     accessWidenerPath = file("src/main/resources/voxy.accesswidener")
 }
 
-def modRuntimeOnlyMsk = {arg->}
+def modRuntimeOnlyMsk = { arg -> }
 if (!isInGHA) {
     modRuntimeOnlyMsk = { arg ->
         dependencies {
@@ -127,6 +137,8 @@ dependencies {
     }
 
     modImplementation("maven.modrinth:lithium:mc1.21.10-0.20.1-fabric")
+
+    modImplementation("net.azureaaron:hm-api:1.0.1+1.21.2")
 
     //modRuntimeOnlyMsk "drouarb:nvidium:0.4.1-beta4:1.21.6@jar"
     modCompileOnly "drouarb:nvidium:0.4.1-beta4:1.21.6@jar"
@@ -179,10 +191,9 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}"}
+        rename { "${it}_${project.archives_base_name}" }
     }
 }
-
 
 
 tasks.register('makeExcludedRocksDB', Zip) {
@@ -195,9 +206,9 @@ tasks.register('makeExcludedRocksDB', Zip) {
     def files = configurations.includeInternal.incoming.getArtifacts().getArtifactFiles().filter {
         it.name.startsWith('rocksdb')
     }
-    
-    from {->zipTree(files.first())}
-    archiveFileName.set(providers.provider{files.first().name})
+
+    from { -> zipTree(files.first()) }
+    archiveFileName.set(providers.provider { files.first().name })
 
     exclude {
         def file = it.name
@@ -212,10 +223,10 @@ tasks.register('makeExcludedRocksDB', Zip) {
 }
 
 processIncludeJars {
-    outputs.cacheIf {true}
+    outputs.cacheIf { true }
 
     dependsOn makeExcludedRocksDB
-    jars = jars.filter {!it.name.startsWith('rocksdb')}
+    jars = jars.filter { !it.name.startsWith('rocksdb') }
     jars.from(makeExcludedRocksDB)
 }
 
